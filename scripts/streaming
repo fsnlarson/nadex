@@ -1,0 +1,108 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+import logging
+import traceback
+
+from pprint import pprint
+from nadex import NadexRestApi
+from nadex.lightstreamer import LSClient, Subscription
+
+
+logging.basicConfig(level=logging.INFO)
+
+
+def get_quote(client, target_market, target_instrument):
+    markets = client.Market.all()
+    for m in markets:
+        if m.name == target_market:
+            # get list of instruments for the market
+            instruments = client.Market.get(m.id)
+            for instrument in instruments:
+                if instrument.name == target_instrument:
+                    serieses = client.Timeseries.get(instrument.id)
+                    epic = None
+                    for series in serieses:
+                        # print(series.id, series.name)
+                        contracts = client.Contract.get(series.id)
+                        for contract in contracts:
+                            yield (series.id, contract.epic)
+                    break
+            break
+
+
+# A simple function acting as a Subscription listener
+def on_item_update(item_update):
+    print(item_update)
+    return
+
+
+# A simple function acting as a Subscription listener
+def on_prices_update(item_update):
+    print("Price")
+    pprint(item_update)
+
+
+def on_account_update(balance_update):
+    print("balance: %s " % balance_update)
+
+def main(target_market, target_instrument):
+
+
+    client = NadexRestApi()
+    account = client.Account.login()
+    user = account.currentAccountId
+    lightstreamerEndpoint = account.lightstreamerEndpoint
+
+    # Establishing a new connection to Lightstreamer Server
+    print("Starting connection: {}".format(lightstreamerEndpoint))
+    lightstreamer_client = LSClient(lightstreamerEndpoint, "InVisionProvider",
+                                    user=user,
+                                    password='XST-{}'.format(client.connection.get_xst()))
+    try:
+        lightstreamer_client.connect()
+    except Exception as e:
+        print("Unable to connect to Lightstreamer Server")
+        print(traceback.format_exc())
+        return
+
+    # Making a new Subscription in MERGE mode
+    keys = []
+    for instrument_id, epic in get_quote(client, target_market, target_instrument):
+        s = Subscription(
+                mode="MERGE",
+                items=['V2-F-HIG,CPC,UBS,AS1,CBS,BS1,AK1,CPT,LOW,CSP,UTM,BD1|{epic}'.format(epic=epic)],
+                fields=["HIG", "CPC", "UBS", "AS1", "CBS", "BS1", "AK1", "CPT", "LOW", "CSP", "UTM", "BD1"],
+        )
+        s.addlistener(on_prices_update)
+        keys.append(lightstreamer_client.subscribe(s))
+
+        s = Subscription(
+                mode="MERGE",
+                items=['V2-F-MKT|{epic}'.format(epic=epic)],
+                fields=["MKT"],
+        )
+        s.addlistener(on_prices_update)
+        keys.append(lightstreamer_client.subscribe(s))
+
+        s = Subscription(
+            mode="MERGE",
+            items=['M___.MGE|HIER-{instrument_id}-JSON'.format(instrument_id=instrument_id)],
+            fields=['JSON']
+        )
+        s.addlistener(on_prices_update)
+        keys.append(lightstreamer_client.subscribe(s))
+
+    input("{0:-^80}\n".format("HIT CR TO UNSUBSCRIBE AND DISCONNECT FROM LIGHTSTREAMER"))
+
+    for k in keys:
+        lightstreamer_client.unsubscribe(k)
+
+    # Disconnecting
+    lightstreamer_client.disconnect()
+
+
+if __name__ == '__main__':
+    target_market = 'Forex Binaries'
+    target_instrument = 'EUR/USD'
+    main(target_market, target_instrument)

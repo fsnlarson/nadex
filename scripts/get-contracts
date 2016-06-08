@@ -1,0 +1,90 @@
+#!/usr/bin/env python
+from __future__ import print_function
+
+from nadex import NadexRestApi
+
+client = NadexRestApi()
+client.Account.login()
+
+target_market = 'Forex Binaries'
+target_instrument = 'GBP/USD'
+
+markets = client.Market.all()
+for m in markets:
+    if m.name != target_market:
+        continue
+
+    print(m.name)
+
+    # get details of the market
+    detail = client.Market.get(m.id)
+    for i in detail:
+        if i.name != target_instrument:
+            continue
+        print(i.name)
+        series = client.Timeseries.get(i.id)
+        for s in series:
+            contracts = client.Contract.get(s.id)
+            for c in contracts:
+                print(
+                    c.
+                    c.epic, # NB.I.GBP-USD.OPT-1-9-07Jun16.IP
+                    c.instrumentName, # GBP/USD >1.4578 (8PM) Binary
+                    c.instrumentType, # CURRENCIES
+                    c.instrumentVersion, # None
+
+                    c.underlyingEpic, # CH.U.GBP-USD.OPT-1-1.IP
+                        c.underlyingInstrumentType, #
+                        c.underlyingContractMonth, #
+
+                        c.high,
+                        c.low,
+                        c.percentageChange,
+
+                        c.scalingFactor,  # 4
+                        c.scaled,  # True
+
+                        c.lastTradeDateTime, # 1465344000000
+
+                        c.decimalPlacesFactor, # 2
+                        c.dynamicHierarchyEpic, # None
+                        c.viewPermission,  # L2
+                        c.hierarchyId3, # 161176
+                        c.ncrMarketStatus, # 0
+
+                        c.netChange,
+                        c.crMarketStatus,
+                        c.lotSize,
+
+                        c.bestBid,
+                        c.bestBidSize,
+                        c.bestOffer,
+                        c.bestOfferSize,
+
+                        c.displayBid,
+                        c.displayBidSize,
+                        c.displayOffer,
+                        c.displayOfferSize,
+                        c.displayPeriod,
+
+                        # flags
+                        c.dmaTradeable,
+                        c.dmaL1Tradeable,
+                        c.editable,
+                        c.newsAccessible,
+                        c.alertsAllowed,
+                        c.mtfAvailable,
+                        c.dxdTradeable,
+                        c.otcTradeable,
+                        c.marketAnalysisAvailable,
+
+
+                        c.updateTime, # 1465339317815
+                        c.formattedUpdateDate, # 06/07/16 18:41:57
+                        c.timezoneOffset, # -5
+                        c.delayTime, # 0
+
+                        c.sortOrder, # 2147469069
+                )
+            break
+        break

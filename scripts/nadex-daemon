@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+import daemon
+
+from nadex import daemon as nadex_daemon
+
+with daemon.DaemonContext():
+     nadex_daemon()
