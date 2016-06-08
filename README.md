@@ -54,7 +54,7 @@ Resources
 =========
 
 | Name | Opeartion | HTTP Method | URL path |
-| ---- | --        | -------- |
+| ---- | --------- | ----------- | -------- |
 | Account | login | POST | v2/security/authenticate |
 | Market | list | GET | markets/navigation |
 | Epic   | get  | GET | markets/details |
