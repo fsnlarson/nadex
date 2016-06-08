@@ -12,23 +12,30 @@ from nadex.lightstreamer import LSClient, Subscription
 logging.basicConfig(level=logging.INFO)
 
 
-def get_quote(client, target_market, target_instrument):
+def get_quote(client, target_market, target_asset_class):
     markets = client.Market.all()
     for m in markets:
-        if m.name == target_market:
-            # get list of instruments for the market
-            instruments = client.Market.get(m.id)
-            for instrument in instruments:
-                if instrument.name == target_instrument:
-                    serieses = client.Timeseries.get(instrument.id)
-                    epic = None
-                    for series in serieses:
-                        # print(series.id, series.name)
-                        contracts = client.Contract.get(series.id)
-                        for contract in contracts:
-                            yield (series.id, contract.epic)
-                    break
-            break
+        if m.name != target_market:
+            #print("ignore", m.name)
+            continue
+        # get list of instruments for the market
+        asset_classes = client.Market.get(m.id)
+        for asset_class in asset_classes:
+            if asset_class.name != target_asset_class:
+                #print("  ignore", asset_class.name)
+                continue
+            expiries = client.Timeseries.get(asset_class.id)
+            if expiries:
+                epic = None
+                for expiry in expiries:
+                    # print(expiry.id, expiry.name)
+                    contracts = client.Contract.get(expiry.id)
+                    for contract in contracts:
+                        yield (expiry.id, contract.epic)
+            else:
+                contracts = client.Contract.get(asset_class.id)
+                for contract in contracts:
+                    yield (asset_class.id, contract.epic)
 
 
 # A simple function acting as a Subscription listener
@@ -39,17 +46,14 @@ def on_item_update(item_update):
 
 # A simple function acting as a Subscription listener
 def on_prices_update(item_update):
-    print("Price")
-    pprint(item_update)
+    name = item_update.get('name','').split('|')[1]
+    print(name, item_update.get('values'))
 
 
 def on_account_update(balance_update):
     print("balance: %s " % balance_update)
 
-def main(target_market, target_instrument):
-
-
-    client = NadexRestApi()
+def main(client, target_market, target_instrument):
     account = client.Account.login()
     user = account.currentAccountId
     lightstreamerEndpoint = account.lightstreamerEndpoint
@@ -76,7 +80,7 @@ def main(target_market, target_instrument):
         )
         s.addlistener(on_prices_update)
         keys.append(lightstreamer_client.subscribe(s))
-
+        '''
         s = Subscription(
                 mode="MERGE",
                 items=['V2-F-MKT|{epic}'.format(epic=epic)],
@@ -92,7 +96,7 @@ def main(target_market, target_instrument):
         )
         s.addlistener(on_prices_update)
         keys.append(lightstreamer_client.subscribe(s))
-
+        '''
     input("{0:-^80}\n".format("HIT CR TO UNSUBSCRIBE AND DISCONNECT FROM LIGHTSTREAMER"))
 
     for k in keys:
@@ -103,6 +107,11 @@ def main(target_market, target_instrument):
 
 
 if __name__ == '__main__':
-    target_market = 'Forex Binaries'
+    target_market = '5 Minute Binaries'
+    target_asset_class = 'Forex'
     target_instrument = 'EUR/USD'
-    main(target_market, target_instrument)
+    client = NadexRestApi()
+    client.Account.login()
+    #for c in get_quote(client, target_market, target_asset_class):
+    #    print(c)
+    main(client, target_market, target_asset_class)
