@@ -1,13 +1,23 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import time
 
 from nadex import NadexRestApi
 
 client = NadexRestApi()
 client.Account.login()
+order_content = {
+    'orderLevel': 59.00,
+    'direction': '-',
+    'timeInForce': 'GoodTillCancelled',
+    'stopLevel': None,
+    'limitLevel': None,
+    'timeStamp': int(time.time()),
+    'lsServerName': u'https://demo-upd.nadex.com',
+    'orderType': 'Limit',
+    'orderSize': 1,
+    'epic': 'NB.I.EUR-JPY.OPT-22-1-25Aug16.IP',
+    'sizeForPandLCalculation': 1
+}
 
-from nadex.resources import Order
-
-order = Order(price=1.13366, direction='+', epic='EURUSD', size=1)
-
-print(client.Order.create(order))
+print(client.Order.create(**order_content))

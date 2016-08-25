@@ -24,10 +24,10 @@ for m in markets:
         print(i.name)
         series = client.Timeseries.get(i.id)
         for s in series:
+            print("Series ID {}".format(s.id))
             contracts = client.Contract.get(s.id)
             for c in contracts:
                 print(
-                    c.
                     c.epic, # NB.I.GBP-USD.OPT-1-9-07Jun16.IP
                     c.instrumentName, # GBP/USD >1.4578 (8PM) Binary
                     c.instrumentType, # CURRENCIES
