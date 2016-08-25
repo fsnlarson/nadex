@@ -7,9 +7,7 @@ class NadexRestApi(object):
     """
     """
 
-    def __init__(self, conn=None):
-        if not conn:
-            conn = connection.Connection()
+    def __init__(self, conn):
         self.connection = conn
 
     def __getattr__(self, item):

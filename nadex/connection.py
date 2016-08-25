@@ -22,7 +22,7 @@ class Connection(object):
     Connection class manages the connection to the Nadex REST API.
     """
 
-    def __init__(self, base_url=TRADE_URL):
+    def __init__(self, base_url):
         self.base_url = base_url
         self.timeout = 7.0  # need to catch timeout?
 

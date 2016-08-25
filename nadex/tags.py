@@ -1,3 +1,15 @@
+entities = {
+    "NB": "Nadex"
+}
+
+expiries = {
+    "I": "5 Minute Binaries",  # Intraday
+    "W": "Weekly"
+}
+
+
+epic="{entity}.{expiry}.{symbol}.{instrument}.IP"
+
 definition = {
     "AS1": {
         "description": "Ask Size",
